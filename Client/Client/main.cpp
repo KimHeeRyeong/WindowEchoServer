@@ -4,11 +4,21 @@
 #include <WinSock2.h>
 
 #define BUF_SIZE 1024
+#define OPSZ 4
 void ErrorHandling(const char* message);
+
+bool checkLeapYear(int year);
+int getMaxDay(int year, int month);
+
 int main() {
 	WSAData wsaData;
 	SOCKET hSocket;
+	char opmsg[BUF_SIZE] = {0};
+	int result, opndCnt, i;
 	SOCKADDR_IN servAddr;
+
+	int year = 0, month = 0, day = 0;
+	int dDay = 0;
 
 	char message[BUF_SIZE];
 	int strLen;
@@ -34,18 +44,34 @@ int main() {
 		puts("Connected...............");
 	};
 
-	while (1) {
-		fputs("Input message(Q to quit): ", stdout);
-		fgets(message, BUF_SIZE, stdin);//enter까지 저장
-
-		if (!strcmp(message, "q\n") || !strcmp(message, "Q\n"))
-			break;
-
-		send(hSocket, message, strlen(message), 0);//strlen 은 null을 제외하고 문자열 갯수
-		strLen = recv(hSocket, message, BUF_SIZE - 1, 0);
-		message[strLen] = 0;
-		printf("Message from server:%s", message);
+	//input year
+	while (year<1000||year>9999) {
+		printf("연도 입력(4자리) : ");
+		scanf_s("%d", (int*)&opmsg[0], OPSZ);
+		year= *((int*)opmsg);
 	}
+
+	//input month
+	while (month < 1 || month>12) {
+		printf("월 입력(1~12) : ");
+		scanf_s("%d", &month, sizeof(int));
+	}
+	opmsg[OPSZ] = (char)month;
+
+	//input day
+	int maxDay = getMaxDay(year, month);
+	while (day < 1 || day > maxDay) {
+		printf("날짜 입력(1~%d) : ", maxDay);
+		scanf_s("%d",&day, sizeof(int));
+	}
+	opmsg[OPSZ + 1] = (char)day;
+
+	//send date and receive dDay
+	send(hSocket,opmsg,OPSZ+2, 0);
+	recv(hSocket, (char*)&dDay, sizeof(int), 0);
+
+	printf("오늘로부터 dDay %d\n", dDay);
+
 	closesocket(hSocket);
 	WSACleanup();
 	system("pause");
@@ -57,4 +83,42 @@ void ErrorHandling(const char * message)
 	fputs(message, stderr);
 	fputc('\n', stderr);
 	exit(1);
+}
+bool checkLeapYear(int year)
+{
+	if (year % 400 == 0) {
+		return true;
+	}
+	else if (year % 4 == 0 && year % 100 != 0) {
+		return true;
+	}
+
+	return false;
+}
+
+int getMaxDay(int year, int month)
+{
+	int maxDay = 30;
+	bool leapYear = checkLeapYear(year);
+
+	switch (month)
+	{
+	case 4:
+	case 6:
+	case 9:
+	case 11:
+		maxDay = 31;
+		break;
+	case 2:
+		if (leapYear) {
+			maxDay = 29;
+		}else {
+			maxDay = 28;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return maxDay;
 }

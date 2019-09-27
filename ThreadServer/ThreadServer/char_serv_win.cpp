@@ -8,7 +8,7 @@
 #define MAX_CLNT 256
 
 unsigned WINAPI HandleClnt(void* arg);
-void SendMsg(char* msg, int len, SOCKET* clntSock);
+void SendMsg(char* msg, int len);
 void ErrorHandling(const char *message);
 
 int clntCnt = 0;
@@ -69,7 +69,7 @@ unsigned WINAPI HandleClnt(void * arg)
 	char msg[BUF_SIZE] = { 0 };
 
 	while ((strLen = recv(hClntSock, msg, sizeof(msg), 0)) > 0) {
-		SendMsg(msg, strLen, &hClntSock);
+		SendMsg(msg, strLen);
 	}
 
 	WaitForSingleObject(hMutex, INFINITE);
@@ -87,7 +87,7 @@ unsigned WINAPI HandleClnt(void * arg)
 	closesocket(hClntSock);
 	return 0;
 }
-void SendMsg(char * msg, int len, SOCKET* clntSock)
+void SendMsg(char * msg, int len)
 {
 	int i;
 	WaitForSingleObject(hMutex, INFINITE);

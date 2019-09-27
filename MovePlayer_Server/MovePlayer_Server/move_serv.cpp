@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <process.h>
+#include <Windows.h>
+#include <string.h>
+
+#define BUF_SIZE 100
+#define MAX_CLNT 256
+
+unsigned WINAPI HandlingClnt(void * arg);
+void SendMsg(char* msg, int len);
+void ErrorHandling(const char* msg);
+
+int clntCnt = 0;
+SOCKET clntSock[MAX_CLNT];
+HANDLE hMutex;
+
+int main() {
+	WSADATA wsaData;
+	SOCKET hServSock, hClntSock;
+	SOCKADDR_IN servAdr, clntAdr;
+
+	int szClntAdr;
+	HANDLE hThread;
+
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+		ErrorHandling("WsaStartup() error");
+	}
+
+	hMutex = CreateMutex(NULL, false, NULL);
+	hServSock = socket(PF_INET, SOCK_STREAM, 0);
+	
+	if (hServSock == INVALID_SOCKET) {
+		ErrorHandling("socket() error");
+	}
+
+	memset(&servAdr, 0, sizeof(servAdr));
+	servAdr.sin_family = AF_INET;
+	servAdr.sin_addr.s_addr = htonl (INADDR_ANY);
+	servAdr.sin_port = htons(10000);
+
+	if (bind(hServSock, (SOCKADDR*)&servAdr, sizeof(servAdr)) == SOCKET_ERROR) {
+		ErrorHandling("bind() error");
+	}
+	if (listen(hServSock, 5) == SOCKET_ERROR) {
+		ErrorHandling("listen() error");
+	}
+
+	while (1) {
+		szClntAdr = sizeof(clntAdr);
+		hClntSock = accept(hServSock, (SOCKADDR*)&clntAdr, &szClntAdr);
+		
+		WaitForSingleObject(hMutex, INFINITE);
+		clntSock[clntCnt++] = hClntSock;
+		ReleaseMutex(hMutex);
+
+		hThread = (HANDLE)_beginthreadex(NULL, 0, HandlingClnt, (void*)&hClntSock, 0, NULL);
+		printf("Connect Client : %s\n", inet_ntoa(clntAdr.sin_addr));
+	}
+
+	closesocket(hServSock);
+	WSACleanup();
+	return 0;
+}
+
+unsigned WINAPI HandlingClnt(void * arg)
+{
+	SOCKET hClntSock = *((SOCKET*)arg);
+	char msg[BUF_SIZE] = { 0 };
+	int strLen = 0,i;
+
+	while ((strLen = recv(hClntSock, msg, sizeof(msg), 0)) > 0)
+		SendMsg(msg, strLen);
+
+	WaitForSingleObject(hMutex, INFINITE);
+	for(i = 0;i<clntCnt;i++){
+		if (hClntSock == clntSock[i]) {
+			while (i++<clntCnt-1) {
+				clntSock[i] = clntSock[i + 1];
+			}
+			break;
+		}
+	}
+	clntCnt--;
+	ReleaseMutex(hMutex);
+
+	printf("Close Client:%d\n", hClntSock);
+	closesocket(hClntSock);
+	return 0;
+}
+
+void SendMsg(char * msg, int len)
+{
+	int i;
+	WaitForSingleObject(hMutex, INFINITE);
+	for (i = 0; i < clntCnt; i++) {
+		send(clntSock[i], msg, len, 0);
+	}
+	ReleaseMutex(hMutex);
+}
+
+void ErrorHandling(const char * msg)
+{
+	fputs(msg, stderr);
+	fputc('\n', stderr);
+	//exit(1);
+}

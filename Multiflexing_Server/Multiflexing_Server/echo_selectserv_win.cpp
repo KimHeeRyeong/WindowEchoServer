@@ -7,6 +7,7 @@
 #include <random>
 #define BUF_SIZE 1024
 void ErrorHandling(const char *message);
+void IntPutBuffer(char* buffer, int val);
 struct Status
 {
 	int reinforcement;
@@ -29,6 +30,7 @@ int main() {
 	int adrSz;
 	int strLen, fdNum, i;
 	char buf[BUF_SIZE];
+	int maxReinf = 0;
 	std::vector<Status> clntStatus;
 
 	srand((unsigned int)time(NULL));
@@ -83,7 +85,7 @@ int main() {
 				}
 				else {//read msg
 					strLen = recv(reads.fd_array[i], buf, 1, 0);
-					if (strLen == 0) {
+					if (strLen <= 0) {
 						FD_CLR(reads.fd_array[i], &reads);
 						closesocket(cpyReads.fd_array[i]);
 						clntStatus.erase(clntStatus.begin() + i - 1);
@@ -96,10 +98,21 @@ int main() {
 						switch (cho) {
 						case REINFORCE:
 							if (reinforcement != -1) {//무기가 부서지지않은 경우
-								if (rand() % 100 >= reinforcement) {
+								if (reinforcement > 99) {
+									buf[0] = 'm';
+									send(reads.fd_array[i], buf, 1, 0);//max reinforcement
+								}else if (rand() % 100 >= reinforcement) {
 									reinforcement++;
 									buf[0] = 's';
-									send(reads.fd_array[i],buf, 1, 0);//sucess
+									IntPutBuffer(&buf[1], reinforcement);
+									if (reinforcement > maxReinf) {
+										buf[5] = 'o';
+										maxReinf = reinforcement;
+									}
+									else {
+										buf[5] = 'x';
+									}
+									send(reads.fd_array[i],buf, 6, 0);//sucess
 								}
 								else {
 									reinforcement = -1;
@@ -115,18 +128,18 @@ int main() {
 							clntStatus.at(i - 1).reinforcement = reinforcement;
 							break;
 						case SELL:
+
 							break;
 						case INFO: {
-							strcpy_s(buf, 4, (char*)&reinforcement);
-							strcpy_s(buf+4, 4, (char*)&coin);
-							reinforcement = (int)buf;
-							coin = (int)(buf + 4);
-							printf("%d %d", reinforcement, coin);
-							strcpy_s(buf, 4, (char*)&coin);
+							IntPutBuffer(buf, reinforcement);
+							IntPutBuffer(&buf[4], coin);
 							send(reads.fd_array[i], buf, 8, 0);
 							break; 
 						}
 						case SCORE:
+							IntPutBuffer(buf, maxReinf);
+							IntPutBuffer(&buf[4], reinforcement);
+							send(reads.fd_array[i], buf, 8, 0);
 							break;
 						case END://끝내기
 							FD_CLR(reads.fd_array[i], &reads);
@@ -146,6 +159,12 @@ int main() {
 	WSACleanup();
 	system("pause");
 	return 0;
+}
+void IntPutBuffer(char* buffer, int val) {
+	*(buffer) = val & 0xff;
+	*(buffer+1) = (val >> 8) & 0xff;
+	*(buffer+2) = (val>> 16) & 0xff;
+	*(buffer+3) = (val >> 24) & 0xff;
 }
 void ErrorHandling(const char * message)
 {

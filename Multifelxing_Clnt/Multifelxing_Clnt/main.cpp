@@ -93,7 +93,7 @@ int main() {
 			printf("준비중입니다.");
 			break;
 		case INFO: {
-			int coin = 0;
+			float coin = 0;
 			recv(hSocket, (char*)&reinforcement, 4, 0);
 			recv(hSocket, (char*)&coin, 4, 0);
 			system("cls");
@@ -103,7 +103,7 @@ int main() {
 			else {
 				printf("%d강 무기\n", reinforcement);
 			}
-			printf("코인갯수:%d\n", coin);
+			printf("코인갯수:%f\n", coin);
 			break;
 		}
 		case SCORE:

@@ -95,6 +95,7 @@ int main() {
 						int cho = (int)buf[0];
 						int reinforcement = clntStatus.at(i - 1).reinforcement;
 						int coin = clntStatus.at(i - 1).coin;
+						float testFloat = 20.5f;
 						switch (cho) {
 						case REINFORCE:
 							if (reinforcement != -1) {//무기가 부서지지않은 경우
@@ -131,8 +132,8 @@ int main() {
 
 							break;
 						case INFO: {
-							IntPutBuffer(buf, reinforcement);
-							IntPutBuffer(&buf[4], coin);
+							memcpy(buf, &reinforcement, 4);
+							memcpy(&buf[4], &testFloat, 4);
 							send(reads.fd_array[i], buf, 8, 0);
 							break; 
 						}
@@ -159,6 +160,9 @@ int main() {
 	WSACleanup();
 	system("pause");
 	return 0;
+}
+void FloatPutBuffer(char* buffer, float val) {
+	//memcpy(buffer, val, 4u);
 }
 void IntPutBuffer(char* buffer, int val) {
 	*(buffer) = val & 0xff;

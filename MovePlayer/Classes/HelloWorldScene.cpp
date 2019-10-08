@@ -4,6 +4,7 @@
 
 bool HelloWorld::init()
 {
+
 	sprs.clear();
 	speed = 3.0f;
 	//set socket
@@ -44,6 +45,7 @@ void HelloWorld::recvMsg(float delta)
 	cpyReads = reads;
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
+
 	int fdNum = 0;
 	if ((fdNum = select(0, &cpyReads, 0, 0, &timeout)) == SOCKET_ERROR) {
 		this->unschedule(schedule_selector(HelloWorld::recvMsg));

@@ -3,6 +3,12 @@
 
 #include "cocos2d.h"
 USING_NS_CC;
+
+struct PanIndex {
+	int x;
+	int y;
+	PanIndex() :x(-1), y(-1){} //x, y값 초기화
+};
 class OmokPan : public cocos2d::Node
 {
 public:
@@ -15,6 +21,7 @@ public:
 	void OnTouchEnded(Touch* touch, Event* event);
 
 	void SetTurn(bool setTurn);
+	PanIndex GetPanIndex();
 	CREATE_FUNC(OmokPan);
 	
 private:
@@ -24,6 +31,7 @@ private:
 	int pan_width;//바둑판 가로칸(=세로칸) 수
 	bool panBlank[15][15];//pan에 돌이 놓였는지 확인 true:돌 없음
 	Sprite* target;
+	PanIndex targetIndex;
 
 	//about touch
 	Point panMin;//바둑판 내부 클릭 확인을 위한 변수
@@ -31,7 +39,7 @@ private:
 	bool movePan;//바둑판 이동을 위한 클릭이었는지 확인
 	
 	//function
-	Point PositionToPanIndex(Point pos);//position을 바둑판 index로 바꾸기
+	PanIndex PositionToPanIndex(Point pos);//position을 바둑판 index로 바꾸기
 	void initPanBlank();
 };
 

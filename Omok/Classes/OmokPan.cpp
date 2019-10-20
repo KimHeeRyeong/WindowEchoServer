@@ -4,7 +4,7 @@ bool OmokPan::init()
 {
 	winSize = Director::getInstance()->getWinSize();
 	blockSize = Sprite::create("block.png")->getContentSize();
-	turn = true;
+	turn = false;
 
 	target = Sprite::create("target.png");
 	target->setAnchorPoint(Point(0, 0));
@@ -87,21 +87,32 @@ void OmokPan::OnTouchEnded(Touch * touch, Event * event)
 		Point pos = touch->getLocation()-this->getPosition();
 		//touch 위치가 바둑판 내 일때,
 		if (pos.x > panMin.x&&pos.x<panMax.x&&pos.y>panMin.y&&pos.y < panMax.y) {
-			Point index = PositionToPanIndex(pos);
-			target->setPosition(panMin+(index * blockSize.width));
-			target->setVisible(true);
+			targetIndex = PositionToPanIndex(pos);
+			if (panBlank[targetIndex.x][targetIndex.y]) {//해당 위치에 놓여진 돌이 없을때
+				target->setPosition(panMin + Point(targetIndex.x * blockSize.width, targetIndex.y * blockSize.height));
+				target->setVisible(true);
+			}
 		}
 	}
 }
 
 void OmokPan::SetTurn(bool setTurn)
 {
+	if (!setTurn)
+		target->setVisible(false);
 	turn = setTurn;
 }
 
-Point OmokPan::PositionToPanIndex(Point pos)
+PanIndex OmokPan::GetPanIndex()
 {
-	Point index = Point(0, 0);
+	if (!target->isVisible())
+		return PanIndex();
+	return targetIndex;
+}
+
+PanIndex OmokPan::PositionToPanIndex(Point pos)
+{
+	PanIndex index;
 	pos -= panMin;
 	//내림
 	index.x = (int)(pos.x / blockSize.width);

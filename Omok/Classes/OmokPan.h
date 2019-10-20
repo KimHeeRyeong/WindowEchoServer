@@ -1,0 +1,38 @@
+#ifndef __OMOK_PAN_H__
+#define __OMOK_PAN_H__
+
+#include "cocos2d.h"
+USING_NS_CC;
+class OmokPan : public cocos2d::Node
+{
+public:
+    virtual bool init();
+	void InitDrawPan();//바둑판 그리기
+	void InitTouchListener();
+
+	bool OnTouchBegan(Touch* touch, Event* event);
+	void OnTouchMoved(Touch* touch, Event* event);
+	void OnTouchEnded(Touch* touch, Event* event);
+
+	void SetTurn(bool setTurn);
+	CREATE_FUNC(OmokPan);
+	
+private:
+	Size winSize;
+	Size blockSize;
+	bool turn;
+	int pan_width;//바둑판 가로칸(=세로칸) 수
+	bool panBlank[15][15];//pan에 돌이 놓였는지 확인 true:돌 없음
+	Sprite* target;
+
+	//about touch
+	Point panMin;//바둑판 내부 클릭 확인을 위한 변수
+	Point panMax;
+	bool movePan;//바둑판 이동을 위한 클릭이었는지 확인
+	
+	//function
+	Point PositionToPanIndex(Point pos);//position을 바둑판 index로 바꾸기
+	void initPanBlank();
+};
+
+#endif // __OMOK_PAN_H__

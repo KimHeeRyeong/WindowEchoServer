@@ -2,8 +2,9 @@
 #define __OMOK_PAN_H__
 
 #include "cocos2d.h"
+#include <list>
 USING_NS_CC;
-
+using namespace std;
 struct PanIndex {
 	int x;
 	int y;
@@ -22,6 +23,7 @@ public:
 
 	void SetTurn(bool setTurn);
 	PanIndex GetPanIndex();
+	void AddStone(bool isBlack,int posX,int posY);
 	CREATE_FUNC(OmokPan);
 	
 private:
@@ -32,6 +34,7 @@ private:
 	bool panBlank[15][15];//pan에 돌이 놓였는지 확인 true:돌 없음
 	Sprite* target;
 	PanIndex targetIndex;
+	list<Sprite*> stones;
 
 	//about touch
 	Point panMin;//바둑판 내부 클릭 확인을 위한 변수

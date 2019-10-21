@@ -3,7 +3,7 @@
 #include <process.h>
 #include <WinSock2.h>
 #include <Windows.h>
-#include "Message_Format.h"
+#include "MessageFormat.h"
 
 #define BUF_SIZE 100
 #define READ 3
@@ -139,5 +139,4 @@ void ErrorHandling(const char * message)
 	fputc('\n', stderr);
 	exit(1);
 }
-
 

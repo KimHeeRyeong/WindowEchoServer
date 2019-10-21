@@ -5,6 +5,7 @@ bool OmokPan::init()
 	winSize = Director::getInstance()->getWinSize();
 	blockSize = Sprite::create("block.png")->getContentSize();
 	turn = false;
+	stones.clear();
 
 	target = Sprite::create("target.png");
 	target->setAnchorPoint(Point(0, 0));
@@ -108,6 +109,11 @@ PanIndex OmokPan::GetPanIndex()
 	if (!target->isVisible())
 		return PanIndex();
 	return targetIndex;
+}
+
+void OmokPan::AddStone(bool isBlack, int posX, int posY)
+{
+	Sprite* stone;
 }
 
 PanIndex OmokPan::PositionToPanIndex(Point pos)

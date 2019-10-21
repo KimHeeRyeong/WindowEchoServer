@@ -114,6 +114,15 @@ PanIndex OmokPan::GetPanIndex()
 void OmokPan::AddStone(bool isBlack, int posX, int posY)
 {
 	Sprite* stone;
+	if (isBlack) {
+		stone = Sprite::create("blackStone.png");
+	}
+	else {
+		stone = Sprite::create("whiteStone.png");
+	}
+	panBlank[posX][posY] = false;
+	stone->setPosition(panMin + Point(posX * blockSize.width, posY * blockSize.height));
+	this->addChild(stone, 2);
 }
 
 PanIndex OmokPan::PositionToPanIndex(Point pos)

@@ -3,11 +3,13 @@
 #include <process.h>
 #include <WinSock2.h>
 #include <Windows.h>
+#include <string.h>
 #include "MessageFormat.h"
+#include "OmokPan.h"
+#include <list>
 
 #define BUF_SIZE 100
-#define READ 3
-#define WRITE 5
+#define MAX_CLNT 256
 
 typedef struct {
 	SOCKET hClntSock;
@@ -18,12 +20,16 @@ typedef struct {  //buffer info
 	OVERLAPPED overlapped;
 	WSABUF wsaBuf;
 	char buffer[BUF_SIZE];
-	int rwMode;//READ or WRITE
+	int mode;
+	bool isBlack;
+	SOCKET hOppSock;
+	
 }PER_IO_DATA, *LPPER_IO_DATA;
 
 unsigned WINAPI EchoThreadMain(LPVOID pComPort);
 void ErrorHandling(const char *message);
 
+SOCKET hWaitSocket= NULL;
 int main() {
 	WSADATA wsaData;
 	HANDLE hComPort;
@@ -39,7 +45,7 @@ int main() {
 		ErrorHandling("WSAStartup() error");
 
 	//io 완료 확인을 위함
-	hComPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);//io 완료 처리를 할 쓰레드 수는 0개?
+	hComPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 	GetSystemInfo(&sysInfo);//dwNumber~ :cpu core count
 	for (i = 0; i < sysInfo.dwNumberOfProcessors; i++)
 		_beginthreadex(NULL, 0, EchoThreadMain, (LPVOID)hComPort, 0, NULL);
@@ -71,19 +77,29 @@ int main() {
 		handleInfo = new PER_HANDLE_DATA();
 		handleInfo->hClntSock = hClntSock;
 		memcpy(&(handleInfo->clntAdr), &clntAdr, addrLen);
-
 		CreateIoCompletionPort((HANDLE)hClntSock, hComPort, (DWORD)handleInfo, 0);
-		ioInfo = (LPPER_IO_DATA)malloc(sizeof(PER_IO_DATA));
-		memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-		ioInfo->wsaBuf.len = BUF_SIZE;
-		ioInfo->wsaBuf.buf = ioInfo->buffer;
-		ioInfo->rwMode = READ;
-
-		//대기x, 등록을 위함
-		//1번 클라이언트가 메시지를 보내면
-		//해당 주소값에 있는 배열에 저장해줘
-		WSARecv(handleInfo->hClntSock, &(ioInfo->wsaBuf),
-			1, (LPDWORD)&recvBytes, (LPDWORD)&flags, &(ioInfo->overlapped), NULL);
+		//대결 상대가 없는 경우
+		if (hWaitSocket == NULL) {
+			hWaitSocket = hClntSock;
+			LPPER_IO_DATA ioInfo = new PER_IO_DATA();
+			memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
+			ioInfo->wsaBuf.len = BUF_SIZE;
+			ioInfo->wsaBuf.buf = ioInfo->buffer;
+			ioInfo->mode = Message::NONE;//대기 상태
+			WSARecv(handleInfo->hClntSock, &(ioInfo->wsaBuf),
+				1, (LPDWORD)&recvBytes, (LPDWORD)&flags, &(ioInfo->overlapped), NULL);
+		}
+		else {
+			LPPER_IO_DATA ioInfo = new PER_IO_DATA();
+			memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
+			ioInfo->wsaBuf.len = BUF_SIZE;
+			ioInfo->wsaBuf.buf = ioInfo->buffer;
+			ioInfo->mode = Message::START;
+			ioInfo->hOppSock = hWaitSocket;
+			hWaitSocket = NULL;
+			WSARecv(handleInfo->hClntSock, &(ioInfo->wsaBuf),
+				1, (LPDWORD)&recvBytes, (LPDWORD)&flags, &(ioInfo->overlapped), NULL);
+		}
 	}
 	return 0;
 }
@@ -106,30 +122,38 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 			, INFINITE);//타임아웃
 		sock = handleInfo->hClntSock;
 
-		if (ioInfo->rwMode == READ) {
-			if (bytesTrans <= 0) {
+		switch (ioInfo->mode)
+		{
+		case Message::NONE:
+			if (bytesTrans <= 0) {//대기 종료할 경우
+				hWaitSocket = NULL;
 				closesocket(sock);
 				free(handleInfo);
+				free(ioInfo);
 				continue;
 			}
-			puts("message received!");
-			memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-			ioInfo->wsaBuf.len = bytesTrans;
-			ioInfo->rwMode = WRITE;
-			WSASend(sock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
+			break;
+		default:
+			break;
+		}
+			//puts("message received!");
+			//memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
+			//ioInfo->wsaBuf.len = bytesTrans;
+			//ioInfo->rwMode = WRITE;
+			//WSASend(sock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
 
-			ioInfo = (LPPER_IO_DATA)malloc(sizeof(PER_IO_DATA));
-			memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-			ioInfo->wsaBuf.len = BUF_SIZE;
-			ioInfo->wsaBuf.buf = ioInfo->buffer;
-			ioInfo->rwMode = READ;
-			WSARecv(sock, &(ioInfo->wsaBuf), 1, NULL, &flags, &(ioInfo->overlapped), NULL);
-		}
-		else {
-			puts("message sent!");
-			puts(ioInfo->wsaBuf.buf);
-			free(ioInfo);
-		}
+			//ioInfo = (LPPER_IO_DATA)malloc(sizeof(PER_IO_DATA));
+			//memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
+			//ioInfo->wsaBuf.len = BUF_SIZE;
+			//ioInfo->wsaBuf.buf = ioInfo->buffer;
+			//ioInfo->rwMode = READ;
+			//WSARecv(sock, &(ioInfo->wsaBuf), 1, NULL, &flags, &(ioInfo->overlapped), NULL);
+		//}
+		//else {
+		//	//puts("message sent!");
+		//	//puts(ioInfo->wsaBuf.buf);
+		//	//free(ioInfo);
+		//}
 	}
 	return 0;
 }

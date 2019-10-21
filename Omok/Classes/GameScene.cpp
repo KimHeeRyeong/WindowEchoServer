@@ -3,6 +3,9 @@
 
 bool GameScene::init()
 {
+	//test
+	SocketManager::getInstance()->StartSocket();
+
 	//¹ÙµÏÆÇ ¼¼ÆÃ
 	Size winSize = Director::getInstance()->getWinSize();
 	pan = OmokPan::create();
@@ -25,8 +28,10 @@ void GameScene::OnClickPutBtn()
 		return;
 
 	pan->SetTurn(false);
-	//send server msg : put stone
-	
+	PutStone put;
+	put.posX = index.x;
+	put.posY = index.y;
+	SocketManager::getInstance()->SendMsg((char*)&put, sizeof(PUTSTONE));
 }
 
 void GameScene::update(float dt)
@@ -40,10 +45,12 @@ void GameScene::update(float dt)
 		break; }
 	case Message::RESULT: {
 		Result result = SocketManager::getInstance()->getResultMsg();
+		pan->AddStone(result.isBlack, result.posX, result.posY);
 		pan->SetTurn(result.turn);
 		break; }
 	case Message::ENDGAME: {
 		EndGame endGame = SocketManager::getInstance()->getEndGameMsg();
+		pan->SetTurn(false);
 		break; }
 	default:
 		break;

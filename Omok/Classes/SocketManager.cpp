@@ -69,7 +69,9 @@ int SocketManager::RecvMsg()
 		switch (code.code)
 		{
 		case Message::START:
+			memcpy(&start, &code, sizeof(Code));
 			recv(hSocket, (char*)(&start + sizeof(Code)), sizeof(Start) - sizeof(Code), 0);
+			CCLOG("message : %s", start.nickOpponent);
 			return Message::START;
 		case Message::RESULT:
 			recv(hSocket, (char*)(&result + sizeof(Code)), sizeof(Result) - sizeof(Code), 0);

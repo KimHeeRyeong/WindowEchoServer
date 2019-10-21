@@ -41,6 +41,7 @@ void GameScene::update(float dt)
 	{
 	case Message::START: {
 		Start start = SocketManager::getInstance()->getStartMsg();
+		CCLOG("receive %s",start.nickOpponent);
 		pan->SetTurn(start.turn);
 		break; }
 	case Message::RESULT: {

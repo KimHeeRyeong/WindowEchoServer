@@ -48,7 +48,7 @@ void SocketManager::CloseSocket()
 
 void SocketManager::SendMsg(char * message, int size)
 {
-	send(hSocket, msg, size, 0);
+	send(hSocket, message, size, 0);
 }
 
 int SocketManager::RecvMsg()
@@ -70,14 +70,13 @@ int SocketManager::RecvMsg()
 		{
 		case Message::START:
 			memcpy(&start, &code, sizeof(Code));
-			recv(hSocket, (char*)(&start + sizeof(Code)), sizeof(Start) - sizeof(Code), 0);
-			CCLOG("message : %s", start.nickOpponent);
+			recv(hSocket, (char*)&start + sizeof(Code), sizeof(Start) - sizeof(Code), 0);
 			return Message::START;
 		case Message::RESULT:
-			recv(hSocket, (char*)(&result + sizeof(Code)), sizeof(Result) - sizeof(Code), 0);
+			recv(hSocket, (char*)&result + sizeof(Code), sizeof(Result) - sizeof(Code), 0);
 			return Message::RESULT;
 		case Message::ENDGAME:
-			recv(hSocket, (char*)(&endGame + sizeof(Code)), sizeof(EndGame) - sizeof(Code), 0);
+			recv(hSocket, (char*)&endGame + sizeof(Code), sizeof(EndGame) - sizeof(Code), 0);
 			return Message::ENDGAME;
 		default:
 			break;

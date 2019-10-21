@@ -104,6 +104,11 @@ void OmokPan::SetTurn(bool setTurn)
 	turn = setTurn;
 }
 
+bool OmokPan::GetTurn()
+{
+	return turn;
+}
+
 PanIndex OmokPan::GetPanIndex()
 {
 	if (!target->isVisible())
@@ -121,7 +126,7 @@ void OmokPan::AddStone(bool isBlack, int posX, int posY)
 		stone = Sprite::create("whiteStone.png");
 	}
 	panBlank[posX][posY] = false;
-	stone->setPosition(panMin + Point(posX * blockSize.width, posY * blockSize.height));
+	stone->setPosition(panMin + Point((posX+0.5f) * blockSize.width, (posY+0.5f) * blockSize.height));
 	this->addChild(stone, 2);
 }
 

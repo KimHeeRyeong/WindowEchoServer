@@ -24,8 +24,6 @@ typedef struct {  //buffer info
 	WSABUF wsaBuf;
 	char buffer[BUF_SIZE];
 	int mode;
-	bool turn;
-	
 }PER_IO_DATA, *LPPER_IO_DATA;
 
 unsigned WINAPI EchoThreadMain(LPVOID pComPort);
@@ -109,16 +107,15 @@ int main() {
 			handleInfoWait->pan = pan;
 
 			Start start;
-			start.isBlack = true;
-			strcpy_s(start.nickOpponent, "black");
-			start.turn = true;
+			start.isBlack = false;
+			strcpy_s(start.nickOpponent, "white");
+			start.turn = false;
 			
 			LPPER_IO_DATA ioInfo = new PER_IO_DATA();
 			memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
 			ioInfo->wsaBuf.len = sizeof(start);
 			ioInfo->wsaBuf.buf = (char*)&start;
 			ioInfo->mode = Message::START;
-			ioInfo->turn = true;
 			WSASend(handleInfoWait->hClntSock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
 
 			//hClntSocket wsaSend
@@ -126,18 +123,16 @@ int main() {
 			handleInfo->isBlack = false;
 			handleInfo->pan = pan;
 
-			Start startClnt;
-			startClnt.isBlack = false;
-			strcpy_s(startClnt.nickOpponent, "white");
-			startClnt.turn = false;
+			start.isBlack = true;
+			strcpy_s(start.nickOpponent, "black");
+			start.turn = true;
 
-			LPPER_IO_DATA ioInfoClnt = new PER_IO_DATA();
-			memset(&(ioInfoClnt->overlapped), 0, sizeof(OVERLAPPED));
-			ioInfoClnt->wsaBuf.len = sizeof(startClnt);
-			ioInfoClnt->wsaBuf.buf = (char*)&startClnt;
-			ioInfoClnt->mode = Message::START;
-			ioInfoClnt->turn = false;
-			WSASend(hClntSock, &(ioInfoClnt->wsaBuf), 1, NULL, 0, &(ioInfoClnt->overlapped), NULL);
+			ioInfo = new PER_IO_DATA();
+			memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
+			ioInfo->wsaBuf.len = sizeof(start);
+			ioInfo->wsaBuf.buf = (char*)&start;
+			ioInfo->mode = Message::START;
+			WSASend(hClntSock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
 
 			handleInfoWait = NULL;
 		}
@@ -176,81 +171,63 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 			}
 			break;
 		case Message::START:
-			if (ioInfo->turn) {
+			//검은 돌의 경우 첫번째 turn->recv
+			if (handleInfo->isBlack) {
 				free(ioInfo);
 				ioInfo = new PER_IO_DATA();
 				memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-				ioInfo->wsaBuf.len = BUF_SIZE;
+				ioInfo->wsaBuf.len = sizeof(PutStone);
 				ioInfo->wsaBuf.buf = ioInfo->buffer;
 				ioInfo->mode = Message::PUTSTONE;
-				ioInfo->turn = true;
 				WSARecv(sock, &(ioInfo->wsaBuf), 1, NULL, &flags, &(ioInfo->overlapped), NULL);
 			}
 			else {
 				free(ioInfo);
 			}
 			break;
-		case Message::PUTSTONE:
-			if (ioInfo->turn) {
-				PutStone putSton;
-				memcpy(&putSton,ioInfo->wsaBuf.buf, sizeof(putSton));
-				free(ioInfo);
-				if (handleInfo->pan->CheckBlank(putSton.posX, putSton.posY)) {
-					if (!handleInfo->pan->AddStone(handleInfo->isBlack, putSton.posX, putSton.posY)) {
-						Result result;
-						result.isBlack = handleInfo->isBlack;
-						result.posX = putSton.posX;
-						result.posY = putSton.posY;
-						result.turn = false;
-
-						LPPER_IO_DATA ioInfo = new PER_IO_DATA();
-						memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-						ioInfo->wsaBuf.len = sizeof(result);
-						ioInfo->wsaBuf.buf = (char*)&result;
-						ioInfo->mode = Message::RESULT;
-						ioInfo->turn = false;
-						WSASend(sock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
-
-						Result resultClnt;
-						resultClnt.isBlack = handleInfo->isBlack;
-						resultClnt.posX = putSton.posX;
-						resultClnt.posY = putSton.posY;
-						resultClnt.turn = true;
-
-						LPPER_IO_DATA ioInfoClnt = new PER_IO_DATA();
-						memset(&(ioInfoClnt->overlapped), 0, sizeof(OVERLAPPED));
-						ioInfoClnt->wsaBuf.len = sizeof(result);
-						ioInfoClnt->wsaBuf.buf = (char*)&result;
-						ioInfoClnt->mode = Message::RESULT;
-						ioInfoClnt->turn = true;
-						WSASend(handleInfo->hOppSock, &(ioInfoClnt->wsaBuf), 1, NULL, 0, &(ioInfoClnt->overlapped), NULL);
-					}
-					
-				}
-				
-			}
+		case Message::RESULT:
 			break;
+		case Message::PUTSTONE: {
+			PutStone putSton;
+			memcpy(&putSton, ioInfo->wsaBuf.buf, sizeof(PutStone));
+			free(ioInfo);
+			if (handleInfo->pan->CheckBlank(putSton.posX, putSton.posY)) {//돌을 놓을 수 있는 자리인가?
+				if (!handleInfo->pan->AddStone(handleInfo->isBlack, putSton.posX, putSton.posY)) {//오목인가?
+					//recv한 socket으로 send
+					Result result;
+					result.isBlack = handleInfo->isBlack;
+					result.posX = putSton.posX;
+					result.posY = putSton.posY;
+					result.turn = false;
+
+					ioInfo = new PER_IO_DATA();
+					memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
+					ioInfo->wsaBuf.len = sizeof(result);
+					ioInfo->wsaBuf.buf = (char*)&result;
+					ioInfo->mode = Message::RESULT;
+					WSASend(sock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
+
+					//상대 socket으로 send
+					result.turn = true;
+
+					ioInfo = new PER_IO_DATA();
+					memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
+					ioInfo->wsaBuf.len = sizeof(result);
+					ioInfo->wsaBuf.buf = (char*)&result;
+					ioInfo->mode = Message::RESULT;
+					WSASend(handleInfo->hOppSock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
+				}
+				else {
+					//send endGame
+				}
+			}
+			else {} // error message
+			break;
+		}
 		default:
 			break;
 		}
-			//puts("message received!");
-			//memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-			//ioInfo->wsaBuf.len = bytesTrans;
-			//ioInfo->rwMode = WRITE;
-			//WSASend(sock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
 
-			//ioInfo = (LPPER_IO_DATA)malloc(sizeof(PER_IO_DATA));
-			//memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-			//ioInfo->wsaBuf.len = BUF_SIZE;
-			//ioInfo->wsaBuf.buf = ioInfo->buffer;
-			//ioInfo->rwMode = READ;
-			//WSARecv(sock, &(ioInfo->wsaBuf), 1, NULL, &flags, &(ioInfo->overlapped), NULL);
-		//}
-		//else {
-		//	//puts("message sent!");
-		//	//puts(ioInfo->wsaBuf.buf);
-		//	//free(ioInfo);
-		//}
 	}
 	return 0;
 }

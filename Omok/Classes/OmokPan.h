@@ -22,6 +22,7 @@ public:
 	void OnTouchEnded(Touch* touch, Event* event);
 
 	void SetTurn(bool setTurn);
+	bool GetTurn();
 	PanIndex GetPanIndex();
 	void AddStone(bool isBlack,int posX,int posY);
 	CREATE_FUNC(OmokPan);

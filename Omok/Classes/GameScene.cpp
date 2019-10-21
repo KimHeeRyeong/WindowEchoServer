@@ -23,15 +23,16 @@ bool GameScene::init()
 
 void GameScene::OnClickPutBtn()
 {
-	PanIndex index = pan->GetPanIndex();
-	if (index.x < 0)//항상 pan index>0이므로, 놓을 자리 선택이 안된 상태를 의미
-		return;
+	if (pan->GetTurn()) {
+		PanIndex index = pan->GetPanIndex();
+		if (index.x < 0)//항상 pan index>0이므로, 놓을 자리 선택이 안된 상태를 의미
+			return;
 
-	pan->SetTurn(false);
-	PutStone put;
-	put.posX = index.x;
-	put.posY = index.y;
-	SocketManager::getInstance()->SendMsg((char*)&put, sizeof(PUTSTONE));
+		pan->SetTurn(false);
+		put.posX = index.x;
+		put.posY = index.y;
+		SocketManager::getInstance()->SendMsg((char*)&put, sizeof(put));
+	}
 }
 
 void GameScene::update(float dt)
@@ -41,7 +42,6 @@ void GameScene::update(float dt)
 	{
 	case Message::START: {
 		Start start = SocketManager::getInstance()->getStartMsg();
-		CCLOG("receive %s",start.nickOpponent);
 		pan->SetTurn(start.turn);
 		break; }
 	case Message::RESULT: {

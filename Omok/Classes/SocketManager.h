@@ -1,6 +1,5 @@
 #ifndef __SOCK_MANAGER_H__
 #define __SOCK_MANAGER_H__
-#include "cocos2d.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <Windows.h>

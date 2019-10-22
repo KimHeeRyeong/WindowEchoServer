@@ -17,7 +17,13 @@ public:
 private:
 	OmokPan* pan;
 	ui::Button* btnPut;//Âø¼ö ¹öÆ°
-	PutStone put;
+
+	Sprite* blackStone;
+	Sprite* whiteStone;
+	Label* myNick;
+	Label* otherNick;
+	Point myPos;
+	Point oppPos;
 
 };
 

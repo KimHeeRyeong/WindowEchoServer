@@ -25,6 +25,7 @@ public:
 	bool GetTurn();
 	PanIndex GetPanIndex();
 	void AddStone(bool isBlack,int posX,int posY);
+	void initPanBlank();
 	CREATE_FUNC(OmokPan);
 	
 private:
@@ -44,7 +45,6 @@ private:
 	
 	//function
 	PanIndex PositionToPanIndex(Point pos);//position을 바둑판 index로 바꾸기
-	void initPanBlank();
 };
 
 #endif // __OMOK_PAN_H__

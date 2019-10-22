@@ -5,7 +5,10 @@ enum Message
 	START,
 	RESULT,
 	ENDGAME,
-	PUTSTONE
+	PUTSTONE,
+	EXITOPP,
+	NICKNAME,
+	REPLAY,
 };
 struct Code
 {
@@ -33,11 +36,13 @@ public:
 struct EndGame :Code {
 public:
 	EndGame() :Code(Message::ENDGAME) {}
-	int endCode;//0:정상end
 	int posX;//놓을 돌 위치
 	int posY; 
 	bool isBlack;//놓을 돌 색상
 	bool isWin;//이겼나?
+};
+struct ExitOpp :Code {//상대 나감
+	ExitOpp() :Code(Message::EXITOPP) {}
 };
 #pragma endregion
 
@@ -47,5 +52,14 @@ public:
 	PutStone() : Code(Message::PUTSTONE) {}
 	int posX;
 	int posY;
-};	
+};
+struct NickName :Code {
+public:
+	NickName() :Code(Message::NICKNAME) {}
+	char nick[20];
+};
+struct RePlay:Code {
+public:
+	RePlay():Code(Message::REPLAY){}
+};
 #pragma endregion

@@ -48,9 +48,25 @@ void SocketManager::CloseSocket()
 
 void SocketManager::SendMsg(char * message, int size)
 {
+	OutputDebugString(L"sendmsg\n");
 	send(hSocket, message, size, 0);
 }
 
+void SocketManager::SendPutStone(int posX, int posY)
+{
+	putStone.posX = posX;
+	putStone.posY = posY;
+	send(hSocket,(char*)&putStone,sizeof(putStone), 0);
+}
+
+void SocketManager::SendNick()
+{
+	send(hSocket, (char*)&nick, sizeof(nick), 0);
+}
+
+void SocketManager::SendReplay() {
+	send(hSocket, (char*)&replay, sizeof(replay), 0);
+}
 int SocketManager::RecvMsg()
 {
 	cpyReads = reads;
@@ -78,6 +94,12 @@ int SocketManager::RecvMsg()
 		case Message::ENDGAME:
 			recv(hSocket, (char*)&endGame + sizeof(Code), sizeof(EndGame) - sizeof(Code), 0);
 			return Message::ENDGAME;
+		case Message::EXITOPP:
+			recv(hSocket, (char*)&exitOpp + sizeof(Code), sizeof(ExitOpp) - sizeof(Code), 0);
+			return Message::EXITOPP;
+		case Message::REPLAY:
+			recv(hSocket, (char*)&replay + sizeof(Code), sizeof(RePlay) - sizeof(Code), 0);
+			return Message::REPLAY;
 		default:
 			break;
 		}
@@ -95,5 +117,16 @@ Result SocketManager::getResultMsg()
 EndGame SocketManager::getEndGameMsg()
 {
 	return endGame;
+}
+
+void SocketManager::SetNickName(string str)
+{
+	memset(nick.nick, 0, sizeof(nick.nick));
+	strcpy_s(nick.nick, str.c_str());
+}
+
+string SocketManager::GetNickName()
+{
+	return nick.nick;
 }
 

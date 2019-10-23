@@ -18,11 +18,13 @@ bool SocketManager::StartSocket()
 {
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 		OutputDebugString(L"WSAStartup() error\n");
+		WSACleanup();
 		return false;
 	}
 	hSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (hSocket == INVALID_SOCKET) {
 		OutputDebugString(L"socket() error\n");
+		CloseSocket();
 		return false;
 	}
 	memset(&servAdr, 0, sizeof(servAdr));
@@ -32,11 +34,15 @@ bool SocketManager::StartSocket()
 
 	if (connect(hSocket, (SOCKADDR*)&servAdr, sizeof(servAdr)) == SOCKET_ERROR) {
 		OutputDebugString(L"connect error\n");
+		CloseSocket();
 		return false;
 	}
 
 	FD_ZERO(&reads);
 	FD_SET(hSocket, &reads);
+
+	isOpen=true;
+
 	return true;
 }
 
@@ -44,6 +50,7 @@ void SocketManager::CloseSocket()
 {
 	closesocket(hSocket);
 	WSACleanup();
+	isOpen = false;
 }
 
 void SocketManager::SendMsg(char * message, int size)
@@ -65,7 +72,12 @@ void SocketManager::SendNick()
 }
 
 void SocketManager::SendReplay() {
-	send(hSocket, (char*)&replay, sizeof(replay), 0);
+	code.code = Message::REPLAY;
+	send(hSocket, (char*)&code, sizeof(code), 0);
+}
+bool SocketManager::SocketIsOpen()
+{
+	return isOpen;
 }
 int SocketManager::RecvMsg()
 {
@@ -81,7 +93,7 @@ int SocketManager::RecvMsg()
 	if (FD_ISSET(hSocket, &cpyReads)) {
 		Code code;
 		recv(hSocket,(char*)&code, sizeof(Code), 0);
-		
+		OutputDebugString(L"recieve something\n");
 		switch (code.code)
 		{
 		case Message::START:
@@ -95,12 +107,13 @@ int SocketManager::RecvMsg()
 			recv(hSocket, (char*)&endGame + sizeof(Code), sizeof(EndGame) - sizeof(Code), 0);
 			return Message::ENDGAME;
 		case Message::EXITOPP:
-			recv(hSocket, (char*)&exitOpp + sizeof(Code), sizeof(ExitOpp) - sizeof(Code), 0);
+			OutputDebugString(L"exit opp\n");
 			return Message::EXITOPP;
 		case Message::REPLAY:
-			recv(hSocket, (char*)&replay + sizeof(Code), sizeof(RePlay) - sizeof(Code), 0);
+			OutputDebugString(L"replay opp\n");
 			return Message::REPLAY;
 		default:
+			OutputDebugString(L"default\n");
 			break;
 		}
 	}

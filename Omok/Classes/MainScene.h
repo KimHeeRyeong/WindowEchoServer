@@ -4,8 +4,8 @@
 #include "cocos2d.h"
 #include "cocos/ui/CocosGUI.h"
 #include "WaitPopUp.h"
-#include "SocketManager.h"
-#include "GameScene.h"
+#include "EditNickName.h"
+
 USING_NS_CC;
 using namespace std;
 class MainScene : public cocos2d::Scene
@@ -20,10 +20,15 @@ private:
 
 	ui::Button* btnStart;
 	ui::Button* btnExit;
+	ui::Button* btnSet;
+
 	WaitPopUp* popUp;
+	Label* label;
 
 	void StartGame();
 	void ExitGame();
+	void SetGame();
+	void EndSetting(EditNickName* nick);
 	void CancelStart();
 
 	virtual void update(float delta);

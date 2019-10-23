@@ -129,6 +129,7 @@ void OmokPan::AddStone(bool isBlack, int posX, int posY)
 	stone->setPosition(panMin + Point((posX+0.5f) * blockSize.width, (posY+0.5f) * blockSize.height));
 	stone->setScale(1.2f);
 	this->addChild(stone, 2);
+	stones.push_back(stone);
 }
 
 PanIndex OmokPan::PositionToPanIndex(Point pos)
@@ -145,9 +146,9 @@ void OmokPan::initPanBlank()
 {
 	//clear stones
 	for (auto spr : stones) {
-		CCLOG("%d",stones.size());
-		this->removeChild(spr, true);
+		spr->removeFromParentAndCleanup(true);
 	}
+	stones.clear();
 	//init pan array
 	for (int col = 0; col <= pan_width; col++) {
 		for (int row = 0; row <= pan_width; row++) {

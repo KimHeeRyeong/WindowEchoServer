@@ -13,6 +13,12 @@
     <Filter Include="src\Scenes">
       <UniqueIdentifier>{3d19c99c-ee6f-4558-b024-50c467258703}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\popup">
+      <UniqueIdentifier>{928166b0-e2e0-4d60-8845-ad78e93e41b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Server">
+      <UniqueIdentifier>{3ab4471b-bb9b-44c6-84ad-9173043b2456}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -24,17 +30,23 @@
     <ClCompile Include="..\Classes\OmokPan.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\SocketManager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\Classes\GameScene.cpp">
       <Filter>src\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="..\Classes\MainScene.cpp">
       <Filter>src\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\WaitPopUp.cpp">
+    <ClCompile Include="..\Classes\EditNickName.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\WaitPopUp.cpp">
+      <Filter>src\popup</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\EndPopUp.cpp">
+      <Filter>src\popup</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\SocketManager.cpp">
+      <Filter>src\Server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -47,20 +59,26 @@
     <ClInclude Include="..\Classes\OmokPan.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\SocketManager.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\MessageFormat.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\Classes\GameScene.h">
       <Filter>src\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\MainScene.h">
       <Filter>src\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\WaitPopUp.h">
+    <ClInclude Include="..\Classes\EditNickName.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\WaitPopUp.h">
+      <Filter>src\popup</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\EndPopUp.h">
+      <Filter>src\popup</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\SocketManager.h">
+      <Filter>src\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\MessageFormat.h">
+      <Filter>src\Server</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

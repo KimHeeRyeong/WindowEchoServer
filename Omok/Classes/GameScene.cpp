@@ -1,5 +1,6 @@
 #include "GameScene.h"
 #include "SocketManager.h"
+#include "MainScene.h"
 
 bool GameScene::init()
 {
@@ -55,6 +56,13 @@ bool GameScene::init()
 	otherNick->setPosition(oppPos.x,oppPos.y-40);
 	this->addChild(otherNick);
 
+	//endPopUp setting
+	endPop = EndPopUp::create();
+	endPop->setPosition(winSize.width*0.5f, winSize.height*0.5f);
+	endPop->StartGame();
+	endPop->GetExitBtn()->addClickEventListener(CC_CALLBACK_0(GameScene::OnClickExitBtn, this));
+	endPop->GetReplayBtn()->addClickEventListener(CC_CALLBACK_0(GameScene::OnClickRePlayBtn, this));
+	this->addChild(endPop);
 	this->scheduleUpdate();
     return true;
 }
@@ -72,13 +80,38 @@ void GameScene::OnClickPutBtn()
 	}
 }
 
+void GameScene::OnClickExitBtn()
+{
+	endPop->Exit();
+	if (SocketManager::getInstance()->SocketIsOpen()) {
+		SocketManager::getInstance()->CloseSocket();
+	}
+	Director::getInstance()->getEventDispatcher()->removeAllEventListeners();
+	Director::getInstance()->replaceScene(MainScene::create());
+}
+
+void GameScene::OnClickRePlayBtn()
+{
+	endPop->Ready();
+	SocketManager::getInstance()->SendReplay();
+}
+
 void GameScene::update(float dt)
 {
 	int code = SocketManager::getInstance()->RecvMsg();
 	switch (code)
 	{
 	case Message::START: {
+		endPop->StartGame();
 		Start start = SocketManager::getInstance()->getStartMsg();
+		if (start.isBlack) {//흑돌 백돌 위치 조정
+			blackStone->setPosition(myPos);
+			whiteStone->setPosition(oppPos);
+		}
+		else {
+			blackStone->setPosition(oppPos);
+			whiteStone->setPosition(myPos);
+		}
 		pan->initPanBlank();
 		pan->SetTurn(start.turn);
 		btnPut->setVisible(start.turn);
@@ -95,14 +128,20 @@ void GameScene::update(float dt)
 		pan->AddStone(endGame.isBlack, endGame.posX, endGame.posY);
 		pan->SetTurn(false);
 		btnPut->setVisible(false);
+		
+		endPop->SetEnd(endGame.isWin);
 		break; 
 	}
 	case Message::EXITOPP:
-		SocketManager::getInstance()->CloseSocket();
-		//상대가 나갔습니다. 안내
+		if (SocketManager::getInstance()->SocketIsOpen()) {
+			SocketManager::getInstance()->CloseSocket();
+		}
+		pan->SetTurn(false);
+		btnPut->setVisible(false);
+		endPop->OppisExit();
 		break;
 	case Message::REPLAY:
-		//샹대가 ready상태입니다. 안내 
+		endPop->OppisReady();
 		break;
 	default:
 		break;

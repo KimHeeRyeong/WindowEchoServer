@@ -14,7 +14,7 @@ typedef struct {
 	SOCKET hClntSock;
 	SOCKADDR_IN clntAdr;
 
-	SOCKET hOppSock;
+	SOCKET hOppSock=NULL;
 	OmokPan* pan = NULL;
 	bool isBlack;
 	bool turn;
@@ -127,22 +127,28 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 					free(handleInfo);
 					free(ioInfo);
 				}
-				else if(handleInfo->pan!=nullptr){//게임중 종료할 경우
+				else if(handleInfo->hOppSock!=NULL){//게임중 종료할 경우
+					SOCKET oppSock = handleInfo->hOppSock;
 					closesocket(sock);
 					free(handleInfo->pan);
 					free(handleInfo);
 					free(ioInfo);
 
 					//상대 socket에 send
-					ExitOpp exitOpp;
+					Code exitOpp(Message::EXITOPP);
 
 					ioInfo = new PER_IO_DATA();
 					memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-					ioInfo->wsaBuf.len = BUF_SIZE;
+					ioInfo->wsaBuf.len = sizeof(Code);
 					memcpy(ioInfo->buffer, (char*)&exitOpp, sizeof(exitOpp));
 					ioInfo->wsaBuf.buf = ioInfo->buffer;
 					ioInfo->rwMode = WRITE;
-					WSASend(handleInfo->hOppSock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
+					WSASend(oppSock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
+				}
+				else {
+					closesocket(sock);
+					free(handleInfo);
+					free(ioInfo);
 				}
 				ReleaseMutex(hMutex);
 				continue;
@@ -169,7 +175,7 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 
 							ioInfo = new PER_IO_DATA();
 							memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-							ioInfo->wsaBuf.len = BUF_SIZE;
+							ioInfo->wsaBuf.len = sizeof(Result);
 							memcpy(ioInfo->buffer, (char*)&result, sizeof(result));
 							ioInfo->wsaBuf.buf = ioInfo->buffer;
 							ioInfo->rwMode = WRITE;
@@ -180,7 +186,7 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 
 							ioInfo = new PER_IO_DATA();
 							memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-							ioInfo->wsaBuf.len = BUF_SIZE;
+							ioInfo->wsaBuf.len = sizeof(Result);
 							memcpy(ioInfo->buffer, (char*)&result, sizeof(result));
 							ioInfo->wsaBuf.buf = ioInfo->buffer;
 							ioInfo->rwMode = WRITE;
@@ -198,7 +204,7 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 
 							ioInfo = new PER_IO_DATA();
 							memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-							ioInfo->wsaBuf.len = BUF_SIZE;
+							ioInfo->wsaBuf.len = sizeof(EndGame);
 							memcpy(ioInfo->buffer, (char*)&endGame, sizeof(endGame));
 							ioInfo->wsaBuf.buf = ioInfo->buffer;
 							ioInfo->rwMode = WRITE;
@@ -209,7 +215,7 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 
 							ioInfo = new PER_IO_DATA();
 							memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-							ioInfo->wsaBuf.len = BUF_SIZE;
+							ioInfo->wsaBuf.len = sizeof(EndGame);
 							memcpy(ioInfo->buffer, (char*)&endGame, sizeof(endGame));
 							ioInfo->wsaBuf.buf = ioInfo->buffer;
 							ioInfo->rwMode = WRITE;
@@ -252,7 +258,7 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 
 					ioInfo = new PER_IO_DATA();
 					memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-					ioInfo->wsaBuf.len = BUF_SIZE;
+					ioInfo->wsaBuf.len = sizeof(Start);
 					memcpy(ioInfo->buffer, (char*)&start, sizeof(start));
 					ioInfo->wsaBuf.buf = ioInfo->buffer;
 					ioInfo->rwMode = WRITE;
@@ -264,7 +270,7 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 
 					ioInfo = new PER_IO_DATA();
 					memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-					ioInfo->wsaBuf.len = BUF_SIZE;
+					ioInfo->wsaBuf.len = sizeof(Start);
 					memcpy(ioInfo->buffer, (char*)&start, sizeof(start));
 					ioInfo->wsaBuf.buf = ioInfo->buffer;
 					ioInfo->rwMode = WRITE;
@@ -288,7 +294,7 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 
 					ioInfo = new PER_IO_DATA();
 					memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-					ioInfo->wsaBuf.len = BUF_SIZE;
+					ioInfo->wsaBuf.len = sizeof(Start);
 					memcpy(ioInfo->buffer, (char*)&start, sizeof(start));
 					ioInfo->wsaBuf.buf = ioInfo->buffer;
 					ioInfo->rwMode = WRITE;
@@ -299,19 +305,19 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 
 					ioInfo = new PER_IO_DATA();
 					memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-					ioInfo->wsaBuf.len = BUF_SIZE;
+					ioInfo->wsaBuf.len = sizeof(Start);
 					memcpy(ioInfo->buffer, (char*)&start, sizeof(start));
 					ioInfo->wsaBuf.buf = ioInfo->buffer;
 					ioInfo->rwMode = WRITE;
-					WSASend(handleInfoWait->hClntSock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
+					WSASend(handleInfo->hOppSock, &(ioInfo->wsaBuf), 1, NULL, 0, &(ioInfo->overlapped), NULL);
 				}
 				else {//나만 ready => 상대에게 ready 사인 전달
 					//상대 socket으로 send
-					RePlay replay;
+					Code replay(Message::REPLAY);
 
 					ioInfo = new PER_IO_DATA();
 					memset(&(ioInfo->overlapped), 0, sizeof(OVERLAPPED));
-					ioInfo->wsaBuf.len = BUF_SIZE;
+					ioInfo->wsaBuf.len = sizeof(Code);
 					memcpy(ioInfo->buffer, (char*)&replay, sizeof(replay));
 					ioInfo->wsaBuf.buf = ioInfo->buffer;
 					ioInfo->rwMode = WRITE;
@@ -354,9 +360,7 @@ unsigned WINAPI EchoThreadMain(LPVOID pComPort)//main 과 동기화를 위해
 				break; 
 			}
 			case Message::EXITOPP: {
-				closesocket(sock);
-				free(handleInfo);
-				free(ioInfo);
+				handleInfo->hOppSock = NULL;
 				break;
 			}
 			case Message::REPLAY:{

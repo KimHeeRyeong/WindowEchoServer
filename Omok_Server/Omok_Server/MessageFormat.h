@@ -6,9 +6,9 @@ enum Message
 	RESULT,
 	ENDGAME,
 	PUTSTONE,
-	EXITOPP,
+	EXITOPP,//상대 나감
 	NICKNAME,
-	REPLAY,
+	REPLAY,//재시작
 };
 struct Code
 {
@@ -41,9 +41,6 @@ public:
 	bool isBlack;//놓을 돌 색상
 	bool isWin;//이겼나?
 };
-struct ExitOpp :Code {//상대 나감
-	ExitOpp() :Code(Message::EXITOPP) {}
-};
 #pragma endregion
 
 #pragma region ClentSend
@@ -57,9 +54,5 @@ struct NickName :Code {
 public:
 	NickName() :Code(Message::NICKNAME) {}
 	char nick[20];
-};
-struct RePlay:Code {
-public:
-	RePlay():Code(Message::REPLAY){}
 };
 #pragma endregion

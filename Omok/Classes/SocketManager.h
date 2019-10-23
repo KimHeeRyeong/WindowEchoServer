@@ -20,6 +20,7 @@ public:
 	void SendPutStone(int posX, int posY);
 	void SendNick();
 	void SendReplay();
+	bool SocketIsOpen();
 	int RecvMsg();
 
 	Start getStartMsg();
@@ -37,17 +38,18 @@ private:
 	TIMEVAL timeout;
 	fd_set reads, cpyReads;
 	char msg[BUF_SIZE];
+	bool isOpen = false;
 
 	//msg format : recieve
 	Start start;
 	Result result;
 	EndGame endGame;
-	ExitOpp exitOpp;
 
 	//send
 	PutStone putStone;
 	NickName nick;
-	RePlay replay;
+
+	Code code;
 
 };
 
